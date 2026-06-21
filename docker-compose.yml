@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: isb-uni-mongo
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: islamabad-uni-hub
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: isb-uni-server
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/islamabad-uni-hub
+    depends_on:
+      - mongo
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: isb-uni-client
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://server:5000/api
+    depends_on:
+      - server
+
+volumes:
+  mongo_data:
